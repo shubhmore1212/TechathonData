@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CombiningData")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b6e39f1001166aab9b798ebf163c87408cf0b723")]
 [assembly: System.Reflection.AssemblyProductAttribute("CombiningData")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CombiningData")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
