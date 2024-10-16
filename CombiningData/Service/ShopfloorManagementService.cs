@@ -1,4 +1,7 @@
 ﻿using CombiningData.Constants;
+using Newtonsoft.Json;
+using ShopfloorService.Sdk.Models.Response;
+using System.Text.Json.Serialization;
 
 namespace CombiningData.Service
 {
@@ -15,8 +18,9 @@ namespace CombiningData.Service
         {
             try
             {
-                var machines=await _httpClient.GetStringAsync("http://localhost/api/shopfloor/api/shop-floor-management/v1/machines");
-                
+                var machines = await _httpClient.GetStringAsync("http://localhost/api/shopfloor/api/shop-floor-management/v1/machines");
+                var machineData = JsonConvert.DeserializeObject<List<MachineResponseModel>>(machines);
+
             }
             catch (Exception)
             {

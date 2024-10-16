@@ -1,13 +1,14 @@
 using CombiningData.Constants;
 using CombiningData.Models;
 using CombiningData.Service;
+using MongoDB.Driver;
 
 var builder = WebApplication.CreateBuilder(args);
-var serviceUrls=builder.Configuration.GetSection("ServiceUrls").Get<ServiceUrls>();
+var serviceUrls = builder.Configuration.GetSection("ServiceUrls").Get<ServiceUrls>();
 
-if (serviceUrls!=null)
+if (serviceUrls != null)
 {
-    builder.Services.AddSingleton(_=>serviceUrls);
+    builder.Services.AddSingleton(_ => serviceUrls);
     builder.Services.AddHttpClient(ShopfloorConstants.ShopfloorManagementService, (service, client) =>
     {
         if (!string.IsNullOrEmpty(serviceUrls.ShopfloorServiceUrl))
@@ -17,6 +18,7 @@ if (serviceUrls!=null)
     });
 }
 
+builder.Services.AddSingleton<IMongoClient, MongoClient>(_ => new MongoClient("mongodb://localhost:30040"));
 builder.Services.AddSingleton<ShopfloorManagementService>();
 
 var app = builder.Build();
