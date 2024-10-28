@@ -1,5 +1,7 @@
 ﻿using CombiningData.Constants;
+using CombiningData.Models;
 using Newtonsoft.Json;
+using ShopfloorService.Sdk.Models;
 using ShopfloorService.Sdk.Models.Response;
 using System.Text.Json.Serialization;
 
@@ -19,7 +21,30 @@ namespace CombiningData.Service
             try
             {
                 var machines = await _httpClient.GetStringAsync("http://localhost/api/shopfloor/api/shop-floor-management/v1/machines");
-                var machineData = JsonConvert.DeserializeObject<List<MachineResponseModel>>(machines);
+                var machinesData = JsonConvert.DeserializeObject<List<MachineResponseModel>>(machines)!;
+                var shifts = await GetShifts();
+                List<ShopfloorDenormalizedModel> shopfloorDenormalizedModels = [];
+                foreach (var shift in shifts)
+                {
+                    foreach (var machine in machinesData)
+                    {
+                        var machineName = machine.Name;
+                        var oeeData = await GetOeeStatistics(machineName);
+                        var machineTimeLineBlocks = await GetTimelineBlocks(machineName);
+
+                        foreach (var machineTimeLine in machineTimeLineBlocks.Where(_=>_.ShiftName==shift.ShiftName))
+                        {
+                            var timeLineBlocks = machineTimeLine.TimeLineBlocks;
+                            foreach (var timeLineBlock in timeLineBlocks)
+                            {
+                                var shopfloorDenormalized = new ShopfloorDenormalizedModel();
+                                shopfloorDenormalized.TimeLineBlock = timeLineBlock;
+                                shopfloorDenormalized.MachineResponse = machine;
+
+                            }
+                        }
+                    }
+                }
 
             }
             catch (Exception)
@@ -29,59 +54,32 @@ namespace CombiningData.Service
             }
         }
 
-        public async Task GetOeeStatistics(string machineName)
+        public async Task<DateSpanOeeReportModel> GetOeeStatistics(string machineName)
         {
-            try
-            {
-                var machines = await _httpClient.GetStringAsync($"http://localhost/api/shopfloor/api/shop-floor-management/v1/production-statistics/{machineName}/oee-statistics");
-                var machineData = JsonConvert.DeserializeObject<List<MachineResponseModel>>(machines);
-
-            }
-            catch (Exception)
-            {
-
-                throw;
-            }
+            var oeeReports = await _httpClient.GetStringAsync($"http://localhost/api/shopfloor/api/shop-floor-management/v1/production-statistics/{machineName}/oee-statistics");
+            var oeeReportsData = JsonConvert.DeserializeObject<DateSpanOeeReportModel>(oeeReports)!;
+            return oeeReportsData;
         }
-        public async Task GetShifts()
+
+        public async Task<List<ShiftModel>> GetShifts()
         {
-            try
-            {
-                var machines = await _httpClient.GetStringAsync("http://localhost/api/shopfloor/api/shop-floor-management/v1/shifts");
-                var machineData = JsonConvert.DeserializeObject<List<MachineResponseModel>>(machines);
-
-            }
-            catch (Exception)
-            {
-
-                throw;
-            }
+            var shifts = await _httpClient.GetStringAsync("http://localhost/api/shopfloor/api/shop-floor-management/v1/shifts");
+            var shiftsData = JsonConvert.DeserializeObject<List<ShiftModel>>(shifts)!;
+            return shiftsData;
         }
-        public async Task GetTimelineBlocks(string machineName)
+        public async Task<List<MachineTimeLine>> GetTimelineBlocks(string machineName)
         {
-            try
-            {
-                var machines = await _httpClient.GetStringAsync($"http://localhost/api/shopfloor/api/shop-floor-management/v1/machines/{machineName}/time-line-data");
-                var machineData = JsonConvert.DeserializeObject<List<MachineResponseModel>>(machines);
+            var timeline = await _httpClient.GetStringAsync($"http://localhost/api/shopfloor/api/shop-floor-management/v1/machines/{machineName}/time-line-data");
+            var timelineData = JsonConvert.DeserializeObject<List<MachineTimeLine>>(timeline)!;
 
-            }
-            catch (Exception)
-            {
-
-                throw;
-            }
+            return timelineData;
         }
-        public async Task GetToolBurnDown(string machineName, string partNumber, string operationNumber)
+        public async Task<List<ToolBurnDownSummary>> GetToolBurnDown(string machineName, string partNumber, string operationNumber)
         {
-            try
-            {
-                var machines = await _httpClient.GetStringAsync($"http://localhost/api/shopfloor/api/shop-floor-management/v1/production-statistics/{machineName}/tool-usage-statistics?partNumber={partNumber}&operationNumber={operationNumber}");
-                var machineData = JsonConvert.DeserializeObject<List<MachineResponseModel>>(machines);
-            }
-            catch(Exception)
-            {
-                throw;
-            }
+
+            var toolBurnDown = await _httpClient.GetStringAsync($"http://localhost/api/shopfloor/api/shop-floor-management/v1/production-statistics/{machineName}/tool-usage-statistics?partNumber={partNumber}&operationNumber={operationNumber}");
+            var toolBurnDownData = JsonConvert.DeserializeObject<List<ToolBurnDownSummary>>(toolBurnDown)!;
+            return toolBurnDownData;
         }
     }
 }
