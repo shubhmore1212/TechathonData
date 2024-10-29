@@ -29,21 +29,34 @@ namespace CombiningData.Service
                     foreach (var machine in machinesData)
                     {
                         var machineName = machine.Name;
-                        var oeeData = await GetOeeStatistics(machineName);
                         var machineTimeLineBlocks = await GetTimelineBlocks(machineName);
 
-                        foreach (var machineTimeLine in machineTimeLineBlocks.Where(_=>_.ShiftName==shift.ShiftName))
+                        foreach (var machineTimeLine in machineTimeLineBlocks.Where(_ => _.ShiftName == shift.ShiftName))
                         {
                             var timeLineBlocks = machineTimeLine.TimeLineBlocks;
                             foreach (var timeLineBlock in timeLineBlocks)
                             {
+                                var oeeData = await GetOeeStatistics(machineName,
+                                                            timeLineBlock.StartTime.Date,
+                                                            timeLineBlock.EndTime.Date);
+                                var subWorkOrderBurnDownSummaries = await GetSubWorkOrderBurnDownRecords(
+                                                timeLineBlock.StartTime.Date, timeLineBlock.EndTime.Date,
+                                                machineName, timeLineBlock.ShiftName);
+
                                 var shopfloorDenormalized = new ShopfloorDenormalizedModel();
                                 shopfloorDenormalized.TimeLineBlock = timeLineBlock;
                                 shopfloorDenormalized.MachineResponse = machine;
+                                shopfloorDenormalized.DateSpanOeeReportModel = oeeData;
+                                shopfloorDenormalized.SubWorkOrderBurnDownSummaries = subWorkOrderBurnDownSummaries;
 
+                                shopfloorDenormalizedModels.Add(shopfloorDenormalized);
                             }
                         }
                     }
+                }
+                foreach (var shopfloorData in shopfloorDenormalizedModels)
+                {
+                    Console.WriteLine(shopfloorData.ToString());
                 }
 
             }
@@ -54,9 +67,13 @@ namespace CombiningData.Service
             }
         }
 
-        public async Task<DateSpanOeeReportModel> GetOeeStatistics(string machineName)
+        public async Task<DateSpanOeeReportModel> GetOeeStatistics(string machineName,
+            DateTime fromDate, DateTime toDate)
         {
-            var oeeReports = await _httpClient.GetStringAsync($"http://localhost/api/shopfloor/api/shop-floor-management/v1/production-statistics/{machineName}/oee-statistics");
+            var oeeReports = await _httpClient.GetStringAsync(
+                $"http://localhost/api/shopfloor/api/shop-floor-management/v1/production-statistics/" +
+                $"{machineName}/oee-statistics?" +
+                $"fromDate={DateOnly.FromDateTime(fromDate)}&toDate={DateOnly.FromDateTime(toDate)}");
             var oeeReportsData = JsonConvert.DeserializeObject<DateSpanOeeReportModel>(oeeReports)!;
             return oeeReportsData;
         }
@@ -77,9 +94,24 @@ namespace CombiningData.Service
         public async Task<List<ToolBurnDownSummary>> GetToolBurnDown(string machineName, string partNumber, string operationNumber)
         {
 
-            var toolBurnDown = await _httpClient.GetStringAsync($"http://localhost/api/shopfloor/api/shop-floor-management/v1/production-statistics/{machineName}/tool-usage-statistics?partNumber={partNumber}&operationNumber={operationNumber}");
+            var toolBurnDown = await _httpClient.GetStringAsync(
+                $"http://localhost/api/shopfloor/api/shop-floor-management/v1/production-statistics/" +
+                $"{machineName}/tool-usage-statistics?" +
+                $"partNumber={partNumber}" +
+                $"&operationNumber={operationNumber}");
             var toolBurnDownData = JsonConvert.DeserializeObject<List<ToolBurnDownSummary>>(toolBurnDown)!;
             return toolBurnDownData;
+        }
+
+        public async Task<List<SubWorkOrderBurnDownSummary>> GetSubWorkOrderBurnDownRecords(
+            DateTime fromDate, DateTime toDate, string machineName, string shiftName)
+        {
+            var subWorkOrderBurnDownRecords = await _httpClient.GetStringAsync(
+                "http://localhost/api/shopfloor/api/shop-floor-management/v1/production-statistics/sub-work-order-burndown-records?" +
+                $"fromDate={DateOnly.FromDateTime(fromDate)}&toDate={DateOnly.FromDateTime(toDate)}" +
+                $"&shifts={shiftName}&machines={machineName}");
+            var subWorkOrderBurnDownRecordsData = JsonConvert.DeserializeObject<List<SubWorkOrderBurnDownSummary>>(subWorkOrderBurnDownRecords)!;
+            return subWorkOrderBurnDownRecordsData;
         }
     }
 }
