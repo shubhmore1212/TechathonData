@@ -1,5 +1,8 @@
-﻿using CombiningData.Constants;
+﻿using ClosedXML.Excel;
+using CombiningData.Constants;
 using CombiningData.Models;
+using DocumentFormat.OpenXml.Office2013.Word;
+using DocumentFormat.OpenXml.Spreadsheet;
 using Newtonsoft.Json;
 using ShopfloorService.Sdk.Models;
 using ShopfloorService.Sdk.Models.Response;
@@ -54,10 +57,56 @@ namespace CombiningData.Service
                         }
                     }
                 }
-                foreach (var shopfloorData in shopfloorDenormalizedModels)
+                using (var workBook = new XLWorkbook())
                 {
-                    Console.WriteLine(shopfloorData.ToString());
+                    var worksheet = workBook.Worksheets.Add("Shopfloor");
+
+                    for (int i = 0; i < shopfloorDenormalizedModels.Count; i++)
+                    {
+                        #region TimeLineBlock
+                        worksheet.Cell(i + 2, 1).Value = shopfloorDenormalizedModels[i].TimeLineBlock.StartTime.ToString();
+                        worksheet.Cell(i + 2, 2).Value = shopfloorDenormalizedModels[i].TimeLineBlock.EndTime.ToString();
+                        worksheet.Cell(i + 2, 3).Value = shopfloorDenormalizedModels[i].TimeLineBlock.Reason.ToString();
+                        worksheet.Cell(i + 2, 4).Value = shopfloorDenormalizedModels[i].TimeLineBlock.Reason.ToString();
+                        worksheet.Cell(i + 2, 5).Value = shopfloorDenormalizedModels[i].TimeLineBlock.ShiftName.ToString();
+                        #endregion
+
+                        #region Machine
+                        worksheet.Cell(i + 2, 6).Value = shopfloorDenormalizedModels[i].MachineResponse.Name.ToString();
+                        worksheet.Cell(i + 2, 7).Value = shopfloorDenormalizedModels[i].MachineResponse.DisplayName.ToString();
+                        worksheet.Cell(i + 2, 8).Value = shopfloorDenormalizedModels[i].MachineResponse.LoadUnLoadTimePerPart.ToString();
+                        worksheet.Cell(i + 2, 9).Value = shopfloorDenormalizedModels[i].MachineResponse.ToolChangeTime.ToString();
+                        #endregion
+
+                        #region Oee Report
+                        if (shopfloorDenormalizedModels[i].DateSpanOeeReportModel != null)
+                        {
+                            worksheet.Cell(i + 2, 11).Value = shopfloorDenormalizedModels[i].DateSpanOeeReportModel.RunningTime.ToString();
+                            worksheet.Cell(i + 2, 12).Value = shopfloorDenormalizedModels[i].DateSpanOeeReportModel.OeeStatistics.Performance.ToString();
+                            worksheet.Cell(i + 2, 13).Value = shopfloorDenormalizedModels[i].DateSpanOeeReportModel.OeeStatistics.Quality.ToString();
+                        }
+                        else
+                        {
+                            worksheet.Cell(i + 2, 11).Value = "-";
+                            worksheet.Cell(i + 2, 12).Value = "-";
+                            worksheet.Cell(i + 2, 13).Value = "-";
+                        }
+                        #endregion
+
+                        foreach (var subWorkOrderBurnDown in shopfloorDenormalizedModels[i].SubWorkOrderBurnDownSummaries)
+                        {
+                            worksheet.Cell(i + 2, 14).Value = subWorkOrderBurnDown.PartNumber;
+                            worksheet.Cell(i + 2, 15).Value = subWorkOrderBurnDown.OperationNumber;
+                            worksheet.Cell(i + 2, 16).Value = subWorkOrderBurnDown.SubWorkOrderId;
+                            worksheet.Cell(i + 2, 17).Value = subWorkOrderBurnDown.PartProducedCount;
+                            worksheet.Cell(i + 2, 18).Value = subWorkOrderBurnDown.PartRejectedCount;
+                        }
+                    }
+
+                    workBook.SaveAs("Shopfloor.xlsx");
                 }
+
+                await Console.Out.WriteLineAsync("Done Bro!");
 
             }
             catch (Exception)
