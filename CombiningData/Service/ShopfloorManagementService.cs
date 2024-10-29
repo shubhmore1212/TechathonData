@@ -20,7 +20,7 @@ namespace CombiningData.Service
         {
             try
             {
-                var machines = await _httpClient.GetStringAsync("http://localhost/api/shopfloor/api/shop-floor-management/v1/machines");
+                var machines = await _httpClient.GetStringAsync("api/shop-floor-management/v1/machines");
                 var machinesData = JsonConvert.DeserializeObject<List<MachineResponseModel>>(machines)!;
                 var shifts = await GetShifts();
                 List<ShopfloorDenormalizedModel> shopfloorDenormalizedModels = [];
@@ -71,7 +71,7 @@ namespace CombiningData.Service
             DateTime fromDate, DateTime toDate)
         {
             var oeeReports = await _httpClient.GetStringAsync(
-                $"http://localhost/api/shopfloor/api/shop-floor-management/v1/production-statistics/" +
+                "api/shopfloor/api/shop-floor-management/v1/production-statistics/" +
                 $"{machineName}/oee-statistics?" +
                 $"fromDate={DateOnly.FromDateTime(fromDate)}&toDate={DateOnly.FromDateTime(toDate)}");
             var oeeReportsData = JsonConvert.DeserializeObject<DateSpanOeeReportModel>(oeeReports)!;
@@ -80,13 +80,13 @@ namespace CombiningData.Service
 
         public async Task<List<ShiftModel>> GetShifts()
         {
-            var shifts = await _httpClient.GetStringAsync("http://localhost/api/shopfloor/api/shop-floor-management/v1/shifts");
+            var shifts = await _httpClient.GetStringAsync("api/shopfloor/api/shop-floor-management/v1/shifts");
             var shiftsData = JsonConvert.DeserializeObject<List<ShiftModel>>(shifts)!;
             return shiftsData;
         }
         public async Task<List<MachineTimeLine>> GetTimelineBlocks(string machineName)
         {
-            var timeline = await _httpClient.GetStringAsync($"http://localhost/api/shopfloor/api/shop-floor-management/v1/machines/{machineName}/time-line-data");
+            var timeline = await _httpClient.GetStringAsync($"api/shopfloor/api/shop-floor-management/v1/machines/{machineName}/time-line-data");
             var timelineData = JsonConvert.DeserializeObject<List<MachineTimeLine>>(timeline)!;
 
             return timelineData;
@@ -95,7 +95,7 @@ namespace CombiningData.Service
         {
 
             var toolBurnDown = await _httpClient.GetStringAsync(
-                $"http://localhost/api/shopfloor/api/shop-floor-management/v1/production-statistics/" +
+                $"api/shopfloor/api/shop-floor-management/v1/production-statistics/" +
                 $"{machineName}/tool-usage-statistics?" +
                 $"partNumber={partNumber}" +
                 $"&operationNumber={operationNumber}");
@@ -107,7 +107,7 @@ namespace CombiningData.Service
             DateTime fromDate, DateTime toDate, string machineName, string shiftName)
         {
             var subWorkOrderBurnDownRecords = await _httpClient.GetStringAsync(
-                "http://localhost/api/shopfloor/api/shop-floor-management/v1/production-statistics/sub-work-order-burndown-records?" +
+                "api/shopfloor/api/shop-floor-management/v1/production-statistics/sub-work-order-burndown-records?" +
                 $"fromDate={DateOnly.FromDateTime(fromDate)}&toDate={DateOnly.FromDateTime(toDate)}" +
                 $"&shifts={shiftName}&machines={machineName}");
             var subWorkOrderBurnDownRecordsData = JsonConvert.DeserializeObject<List<SubWorkOrderBurnDownSummary>>(subWorkOrderBurnDownRecords)!;

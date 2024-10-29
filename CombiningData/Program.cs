@@ -14,6 +14,7 @@ if (serviceUrls != null)
         if (!string.IsNullOrEmpty(serviceUrls.ShopfloorServiceUrl))
         {
             client.BaseAddress = new Uri(serviceUrls.ShopfloorServiceUrl);
+            client.DefaultRequestHeaders.Add("Accept", "application/json");
         }
     });
 }
