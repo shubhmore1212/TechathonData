@@ -24,6 +24,6 @@ builder.Services.AddSingleton<ShopfloorManagementService>();
 
 var app = builder.Build();
 
-app.MapGet("/", async (ShopfloorManagementService shopfloor) => await shopfloor.GetMachines());
+app.MapGet("/", async (ShopfloorManagementService shopfloor) => await shopfloor.ExportShopfloorDataToExcel());
 
 app.Run();

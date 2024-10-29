@@ -19,7 +19,7 @@ namespace CombiningData.Service
             _httpClient = httpClientFactory.CreateClient(ShopfloorConstants.ShopfloorManagementService);
         }
 
-        public async Task GetMachines()
+        public async Task ExportShopfloorDataToExcel()
         {
             try
             {
@@ -61,46 +61,63 @@ namespace CombiningData.Service
                 {
                     var worksheet = workBook.Worksheets.Add("Shopfloor");
 
+
+                    #region Headers
+                    List<string> headers = new List<string>
+                    {
+                        "Start Time", "End Time", "Reason", "Shift Name", "Machine Name", "Machine Display Name",
+                        "Load/Unload Time Per Part", "Tool Change Time Per Part", "Running Time",
+                        "Performance","Quality", "Part Number", "Operation Number", "Sub Work Order Id",
+                        "Part Produced Count", "Part Rejected Count"
+                    };
+
+                    for (int i = 0; i < headers.Count; i++)
+                    {
+                        worksheet.Cell(1, i + 1).Value = headers[i];
+                    }
+                    #endregion
+
                     for (int i = 0; i < shopfloorDenormalizedModels.Count; i++)
                     {
                         #region TimeLineBlock
                         worksheet.Cell(i + 2, 1).Value = shopfloorDenormalizedModels[i].TimeLineBlock.StartTime.ToString();
                         worksheet.Cell(i + 2, 2).Value = shopfloorDenormalizedModels[i].TimeLineBlock.EndTime.ToString();
                         worksheet.Cell(i + 2, 3).Value = shopfloorDenormalizedModels[i].TimeLineBlock.Reason.ToString();
-                        worksheet.Cell(i + 2, 4).Value = shopfloorDenormalizedModels[i].TimeLineBlock.Reason.ToString();
-                        worksheet.Cell(i + 2, 5).Value = shopfloorDenormalizedModels[i].TimeLineBlock.ShiftName.ToString();
+                        worksheet.Cell(i + 2, 4).Value = shopfloorDenormalizedModels[i].TimeLineBlock.ShiftName.ToString();
                         #endregion
 
                         #region Machine
-                        worksheet.Cell(i + 2, 6).Value = shopfloorDenormalizedModels[i].MachineResponse.Name.ToString();
-                        worksheet.Cell(i + 2, 7).Value = shopfloorDenormalizedModels[i].MachineResponse.DisplayName.ToString();
-                        worksheet.Cell(i + 2, 8).Value = shopfloorDenormalizedModels[i].MachineResponse.LoadUnLoadTimePerPart.ToString();
-                        worksheet.Cell(i + 2, 9).Value = shopfloorDenormalizedModels[i].MachineResponse.ToolChangeTime.ToString();
+                        worksheet.Cell(i + 2, 5).Value = shopfloorDenormalizedModels[i].MachineResponse.Name.ToString();
+                        worksheet.Cell(i + 2, 6).Value = shopfloorDenormalizedModels[i].MachineResponse.DisplayName.ToString();
+                        worksheet.Cell(i + 2, 7).Value = shopfloorDenormalizedModels[i].MachineResponse.LoadUnLoadTimePerPart.ToString();
+                        worksheet.Cell(i + 2, 8).Value = shopfloorDenormalizedModels[i].MachineResponse.ToolChangeTime.ToString();
                         #endregion
 
                         #region Oee Report
                         if (shopfloorDenormalizedModels[i].DateSpanOeeReportModel != null)
                         {
-                            worksheet.Cell(i + 2, 11).Value = shopfloorDenormalizedModels[i].DateSpanOeeReportModel.RunningTime.ToString();
-                            worksheet.Cell(i + 2, 12).Value = shopfloorDenormalizedModels[i].DateSpanOeeReportModel.OeeStatistics.Performance.ToString();
-                            worksheet.Cell(i + 2, 13).Value = shopfloorDenormalizedModels[i].DateSpanOeeReportModel.OeeStatistics.Quality.ToString();
+                            worksheet.Cell(i + 2, 9).Value = shopfloorDenormalizedModels[i].DateSpanOeeReportModel.RunningTime.ToString();
+                            worksheet.Cell(i + 2, 10).Value = shopfloorDenormalizedModels[i].DateSpanOeeReportModel.OeeStatistics.Performance.ToString();
+                            worksheet.Cell(i + 2, 11).Value = shopfloorDenormalizedModels[i].DateSpanOeeReportModel.OeeStatistics.Quality.ToString();
                         }
                         else
                         {
+                            worksheet.Cell(i + 2, 9).Value = "-";
+                            worksheet.Cell(i + 2, 10).Value = "-";
                             worksheet.Cell(i + 2, 11).Value = "-";
-                            worksheet.Cell(i + 2, 12).Value = "-";
-                            worksheet.Cell(i + 2, 13).Value = "-";
                         }
                         #endregion
 
+                        #region Sub Work Order Burn Down
                         foreach (var subWorkOrderBurnDown in shopfloorDenormalizedModels[i].SubWorkOrderBurnDownSummaries)
                         {
-                            worksheet.Cell(i + 2, 14).Value = subWorkOrderBurnDown.PartNumber;
-                            worksheet.Cell(i + 2, 15).Value = subWorkOrderBurnDown.OperationNumber;
-                            worksheet.Cell(i + 2, 16).Value = subWorkOrderBurnDown.SubWorkOrderId;
-                            worksheet.Cell(i + 2, 17).Value = subWorkOrderBurnDown.PartProducedCount;
-                            worksheet.Cell(i + 2, 18).Value = subWorkOrderBurnDown.PartRejectedCount;
+                            worksheet.Cell(i + 2, 12).Value = subWorkOrderBurnDown.PartNumber;
+                            worksheet.Cell(i + 2, 13).Value = subWorkOrderBurnDown.OperationNumber;
+                            worksheet.Cell(i + 2, 14).Value = subWorkOrderBurnDown.SubWorkOrderId;
+                            worksheet.Cell(i + 2, 15).Value = subWorkOrderBurnDown.PartProducedCount;
+                            worksheet.Cell(i + 2, 16).Value = subWorkOrderBurnDown.PartRejectedCount;
                         }
+                        #endregion
                     }
 
                     workBook.SaveAs("Shopfloor.xlsx");
