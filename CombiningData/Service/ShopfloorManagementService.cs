@@ -23,6 +23,7 @@ namespace CombiningData.Service
         {
             try
             {
+                var date = new DateOnly(2024, 11, 25);
                 var machines = await _httpClient.GetStringAsync("api/shop-floor-management/v1/machines");
                 var machinesData = JsonConvert.DeserializeObject<List<MachineResponseModel>>(machines)!;
                 var shifts = await GetShifts();
@@ -32,7 +33,7 @@ namespace CombiningData.Service
                     foreach (var machine in machinesData)
                     {
                         var machineName = machine.Name;
-                        var machineTimeLineBlocks = await GetTimelineBlocks(machineName);
+                        var machineTimeLineBlocks = await GetTimelineBlocks(machineName, date);
 
                         foreach (var machineTimeLine in machineTimeLineBlocks.Where(_ => _.ShiftName == shift.ShiftName))
                         {
@@ -120,7 +121,7 @@ namespace CombiningData.Service
                         #endregion
                     }
 
-                    workBook.SaveAs("Shopfloor.xlsx");
+                    workBook.SaveAs($"{date.Day}_{date.Month}_{date.Year}_Shopfloor.xlsx");
                 }
 
                 await Console.Out.WriteLineAsync("Done Bro!");
@@ -150,9 +151,9 @@ namespace CombiningData.Service
             var shiftsData = JsonConvert.DeserializeObject<List<ShiftModel>>(shifts)!;
             return shiftsData;
         }
-        public async Task<List<MachineTimeLine>> GetTimelineBlocks(string machineName)
+        public async Task<List<MachineTimeLine>> GetTimelineBlocks(string machineName, DateOnly date)
         {
-            var timeline = await _httpClient.GetStringAsync($"api/shopfloor/api/shop-floor-management/v1/machines/{machineName}/time-line-data");
+            var timeline = await _httpClient.GetStringAsync($"api/shopfloor/api/shop-floor-management/v1/machines/{machineName}/time-line-data?date={date}");
             var timelineData = JsonConvert.DeserializeObject<List<MachineTimeLine>>(timeline)!;
 
             return timelineData;
